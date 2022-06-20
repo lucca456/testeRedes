@@ -9,7 +9,7 @@ pos = round(width/2)
 usuarios = dict()
 apelidos = list()
 salas = {"sala_geral": [], "sala01": []}
-ADMIN_SENHA = 'admin'
+
 
 lista_comandos = b'\nComandos\n'\
 				+ b'/criar Para criar uma sala\n'\
@@ -26,70 +26,67 @@ def ajuda(cliente):
 
 
 def lista_salas(cliente):
-    response = "Salas disponíveis: \n"
-    for sala, clientes_sala in salas.items():
-        response = "\n[+] Usuário na sala:\n"
-        response += f"[+]{sala} : {len(clientes_sala)} Usuários\n"
-    cliente.sendall(response.encode('utf-8'))
-
+    cliente.sendall("Salas disponíveis: \n".encode('utf-8'))
+    for keys in salas:
+         cliente.sendall(f"Sala: {keys}\n".encode('utf-8'))
 
 def entrar(cliente):
-    cliente.sendall("\n[+] Salas disponíveis:\n".encode('utf-8'))
+    cliente.sendall("\nSalas:\n".encode('utf-8'))
     for keys in salas:
-        cliente.sendall(f"-> {keys}\n".encode('utf-8'))
-    cliente.sendall("[+] Deseja entrar em qual sala: ".encode('utf-8'))
+        cliente.sendall(f"Sala: {keys}\n".encode('utf-8'))
+    cliente.sendall("Entre com o nome da sala que quer entrar: ".encode('utf-8'))
     nome_sala = cliente.recv(1024).decode('utf-8')
     nome_sala = nome_sala.replace("\n", "").replace("\r", "")
     try:
         sala_origem = procura_cliente_sala(cliente)
         salas[nome_sala].append(cliente)
         salas[sala_origem].remove(cliente)
-        cliente.sendall(f"[!] Bem vindo a sala {nome_sala} [!]\n".encode('utf-8'))
+        cliente.sendall(f"Bem vindo a {nome_sala}\n".encode('utf-8'))
     except:
-        response = "[!] Essa sala não existe no servidor [!]\n"
+        response = "Sala inexistente\n"
         cliente.sendall(response.encode('utf-8'))
 
 
 def sair_sala(cliente):
     try:
-        cliente.sendall("[+] Tem certeza que deseja sair da sala? (sim/nao) ".encode('utf-8'))
+        cliente.sendall("deseja sair da sala? (sim/nao) ".encode('utf-8'))
         resposta = cliente.recv(1024).decode('utf-8')
         resposta = resposta.replace("\n", "").replace("\r", "")
         if resposta.lower() == 'sim':
             sala_origem = procura_cliente_sala(cliente)
             salas["sala_geral"].append(cliente)
             salas[sala_origem].remove(cliente)
-            cliente.sendall(f"[+] Você saiu da sala {sala_origem} e está no Lobby!\n".encode('utf-8'))
+            cliente.sendall(f"Você saiu da sala {sala_origem} e está na sala_geral!\n".encode('utf-8'))
         else:
             pass
     except:
-        response = "[!] Erro ao sair da sala [!]\n"
+        response = "Erro ao sair da sala\n"
         cliente.sendall(response.encode("utf-8"))
 
 def criar_sala(cliente):
     sala_origem = procura_cliente_sala(cliente)
-    cliente.sendall("[+] Entre com o nome da sala que deseja criar: ".encode('utf-8'))
+    cliente.sendall("Escolha o nome da sala que deseja criar: ".encode('utf-8'))
     nome_sala = cliente.recv(1024).decode('utf-8')
     nome_sala = nome_sala.replace("\r", "").replace("\n", "")
     salas[nome_sala] = [cliente]
     salas[sala_origem].remove(cliente)
     entrar(cliente)
-    print(f"[!] Sala {nome_sala} criada [!]\n")
+    print(f"Sala {nome_sala} criada com suscesso\n")
 
 
 def deleta_sala(cliente):
     try:
-        cliente.sendall("[+] Entre com o nome da sala que deseja excluir: ".encode('utf-8'))
+        cliente.sendall("Escreva o nome da sala que quer deletar: ".encode('utf-8'))
         nome_sala = cliente.recv(1024).decode('utf-8')
         nome_sala = nome_sala.replace("\r", "").replace("\n", "")
         clientes_sala = salas[nome_sala]
         salas["sala_geral"].append(clientes_sala)
         salas.pop(nome_sala)
-        cliente.sendall(f"[!] Sala {nome_sala} deletada [!]\n".encode('utf-8'))
-        print(f"[!] Sala {nome_sala} deletada [!]\n")
+        cliente.sendall(f"Sala {nome_sala} deletada com suscesso\n".encode('utf-8'))
+        print(f"Sala {nome_sala} deletada com suscesso\n")
     except Exception as e:
-        cliente.sendall(f"[!] Erro ao deletar a sala {nome_sala} [!]\n".encode('utf-8'))
-        print(f"[!] Erro {e} ao deletar a sala {nome_sala} [!]\n")
+        cliente.sendall(f"Erro ao deletar a sala {nome_sala}\n".encode('utf-8'))
+        print(f"Erro {e} ao deletar a sala {nome_sala}\n")
 
 
 def procura_cliente_sala(cliente):
@@ -103,7 +100,7 @@ def procura_cliente_apelido(cliente):
 
 
 def valida_senha(cliente, senha):
-    if senha == usuarios[cliente]['password'] or senha == ADMIN_SENHA:
+    if senha == usuarios[cliente]['password']:
         return True
     else:
         return False
@@ -111,17 +108,17 @@ def valida_senha(cliente, senha):
 
 
 def sair_do_servidor(cliente):
-    cliente.sendall("[+] Tem certeza que deseja sair do servidor? (sim/nao) ".encode('utf-8'))
+    cliente.sendall("Deseja sair do servidor? (sim/nao) ".encode('utf-8'))
     resposta = cliente.recv(1024).decode('utf-8')
     resposta = resposta.replace("\n", "").replace("\r", "")
     if resposta.lower() == 'sim':
         while True:
-            cliente.sendall("[+] Digite sua senha: ".encode('utf-8'))
+            cliente.sendall("Digite sua senha: ".encode('utf-8'))
             senha = cliente.recv(1024).decode('utf-8')
             senha = senha.replace("\n", "").replace("\r", "")
             senha_checada = valida_senha(cliente, senha)
             if senha_checada == True:
-                cliente.sendall(f"[!] Até logo... [!]\n".encode('utf-8'))
+                cliente.sendall(f"Você saiu do servidor.\n".encode('utf-8'))
                 apelido = procura_cliente_apelido(cliente)
                 apelidos.remove(apelido)
                 sala_origem = procura_cliente_sala(cliente)
@@ -131,20 +128,20 @@ def sair_do_servidor(cliente):
                 del usuarios[cliente]
                 cliente.shutdown(1)
                 cliente.close()
-                print(f"[!] O Usuário {apelido} escolheu sair do servidor [!]")
+                print(f"Usuário {apelido} saiu do servidor")
                 break
             else:
-                cliente.sendall("[!] Senha incorreta [!]\n".encode('utf-8'))
+                cliente.sendall("Senha incorreta\n".encode('utf-8'))
                 continue
     else:
-        cliente.sendall("[!] Otima escolha.... digite /help para exibir as opções [!]\n".encode('utf-8'))
+        cliente.sendall("digite /ajuda para exibir os comandos\n".encode('utf-8'))
         pass
 
 
 def apelido_unico(apelido, cliente):
     while apelido in apelidos:
-        cliente.sendall("[+] Este Nickname já está em uso...\n".encode('utf-8'))
-        cliente.sendall("[+] Nickname: ".encode('utf-8'))
+        cliente.sendall("Este Apelido ja foi escolhido, escolha outro...\n".encode('utf-8'))
+        cliente.sendall("Apelido: ".encode('utf-8'))
         received = cliente.recv(1024).decode('utf-8')
         apelido = received.replace("\n", "").replace("\r", "")
     return apelido
@@ -191,7 +188,7 @@ def valida_comando(msg, cliente):
                 cmd["function"](cliente)
                 return True
             elif auxiliar == len(COMANDOS) and comando != cmd["action"]:
-                cliente.sendall(("[!] Comando inválido [!]\n").encode('utf-8'))
+                cliente.sendall(("Comando inválido\n").encode('utf-8'))
                 return False
             else:
                 pass
@@ -204,36 +201,35 @@ def main():
     try:
         server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        print("[+] Socket criado com sucesso!! [+]")
+        print("Socket criado com sucesso")
     except socket.error as err:
-        print("[+] Erro ao criar o socket... [+]",err)
+        print("Erro ao criar o socket",err)
         sys.exit()
     try:
         server.bind(("127.0.0.1",PORT))
-        print(f"[+] Servidor atrelado a porta {PORT} [+] ")
+        print(f"O Servidor foi atrelado a porta {PORT}")
     except:
-        print("[!] Erro ao atrelar o servidor a porta... [!]")
+        print("Erro ao atrelar o servidor a porta")
         server.close()
         sys.exit()
 
     server.listen(100)
-    print("[+] Servidor aguardando novas conexões... [+]\n")
-    print("[+] A senha de administrador é: adminpassword")
+    print("Servidor esperando novas conexões\n")
 
     while True:
         cliente, addr = server.accept()
-        print(f"[+] Conexão realizada com o endereço {addr} [+]\n")
-        cliente.sendall("[+] Nickname: ".encode('utf-8'))
+        print(f"Conexão realizada com o endereço {addr}\n")
+        cliente.sendall("Apelido: ".encode('utf-8'))
         apelido = cliente.recv(1024).decode('utf-8')
         apelido = apelido.replace("\n", "").replace("\r", "")
         apelido = apelido_unico(apelido, cliente)
         
         
-        cliente.sendall("[+] Nome Completo: ".encode('utf-8'))
+        cliente.sendall("Nome Completo: ".encode('utf-8'))
         full_name = cliente.recv(1024).decode('utf-8')
         full_name = full_name.replace("\n", "").replace("\r", "")
 
-        cliente.sendall("[+] Senha: ".encode('utf-8'))
+        cliente.sendall("Senha: ".encode('utf-8'))
         senha = cliente.recv(1024).decode('utf-8')
         senha = senha.replace("\n", "").replace("\r", "")
         
@@ -247,7 +243,7 @@ def main():
         usuario["password"] = senha
         usuarios[cliente] = usuario
         ajuda(cliente)
-        print(f"[+] Usuário {full_name} com o Nickname {apelido} conectado ao servidor [!]\n")
+        print(f"Usuário {full_name} com o Apelido {apelido} conectou-se ao servidor\n")
         
         thread = threading.Thread(target=valida_msg, args=[cliente])
         thread.start()
@@ -266,14 +262,14 @@ def valida_msg(cliente):
                 deleta_cliente(cliente)
                 break
         except UnicodeDecodeError:
-            cliente.sendall(f"[!] Até logo... [!]\n".encode('utf-8'))
+            cliente.sendall(f"Você saiu do servidor.\n".encode('utf-8'))
             apelido = procura_cliente_apelido(cliente)
             apelidos.remove(apelido)
             deleta_cliente(cliente)
             del usuarios[cliente]
             cliente.shutdown(1)
             cliente.close()
-            print(f"[!] Usuário {apelido} foi Desconectado por CTRL + C [!]\n")
+            print(f"Usuário {apelido} Desconectou-se CTRL + C\n")
             break
         except BaseException as e:
             pass
@@ -288,7 +284,7 @@ def broadcast(msg, cliente):
                     try:
                         cliente_item.send((msg_true + '>').encode('utf-8'))
                     except:
-                        print(f"[!] Erro ao realizar o Broadcast da mensagem [!]\n")
+                        print(f"Erro ao realizar o Broadcast da mensagem\n")
                         deleta_cliente(cliente_item)
             break
 
@@ -302,6 +298,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"[!] Servidor Encerrado [!]")
-        print(f"[!] Até logo... [!]")
+        print(f"Servidor Encerrado")
         sys.exit()
